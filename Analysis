@@ -1,1 +1,108 @@
+'''
+Creator: Kevin O'Sullivan
 
+The goal of this file is to determine the success progression of resident dermatologists over time
+To that end, the following functions are made
+    time_break:
+        Inputs:
+            A dictionary mapping each resident to a diagnosis/outcome dictionary
+            In integer to break the residents' times into
+        Outputs:
+            A dictionary mapping each resident to a dictionary which in turn maps time segments
+            to a success, total tuple
+    
+    graph_the_physicians:
+        Inputs:
+            Same as time_break
+        Output:
+            Graph of resident success rate vs time segment for every physician
+
+'''
+
+import numpy as np
+from matplotlib import pyplot as plt
+
+def time_break(input_resident_dictionary, time_segment):
+    '''
+    Inputs:
+        resident_dictionary:
+            A dictionary of dictionaries.  First mapping residents to a
+            dictionary of outcomes, which in turn maps dates (in days since
+            start day) to an outcome boolean indicating diagnostic success
+            or failure.
+                i.e {"David": {3: True, 117: False, 402: True},
+                     "J.R.R": {5: True, 208: False, 88: False},
+        time_break:
+            An integer value designating the time stratifications (in days) for each
+            resident's tenure over which to evaluate their successes.
+                i.e. 91 #Appx. 1 quarter
+
+    Outputs:
+        A dictionary mapping each resident to the time broken success blocks.  The
+        subdictionary maps each unit time segment to the resident's success
+        tuple (num_success, num_total)
+            {"David": {1: (22, 30), 2: (12, 18)},
+            "J.R.R.": {1: (78, 93), 2: (50, 88)}}
+    '''
+
+    output_dictionary = {}
+
+    for resident_name, resident_outcomes in input_resident_dictionary:
+        resident_time_dictionary = {}
+
+        for day, success in resident_outcomes:   #key is time, value is sucess boolean
+            time_segment = day // time_segment
+            
+            if time_segment not in resident_time_dictionary:
+                if success:
+                    resident_time_dictionary[time_segment] = (1,1)
+                else:
+                    resident_time_dictionary[time_segment] = (0,1)
+
+            if time_segment in resident_time_dictionary:
+                the_tuple = resident_time_dictionary[time_segment]
+                the_tuple[1] += 1
+                if success:     #Success, no further action necessary for failure
+                    the_tuple[0] += 1
+
+        output_dictionary[resident_name] = resident_time_dictionary
+
+        return output_dictionary
+    
+
+
+    def graph_the_physicians(input_resident_dictionary, time_segment):
+        '''
+        Inputs:
+            (see time_break)
+
+        Outputs:
+            Graph of resident success rate vs time segment for every physician
+        '''
+        physician_time_dictionary = time_break(input_resident_dictionary, time_segment)
+    
+        min = 1
+        for physician in physician_time_dictionary:
+            for _, outcomes in physician:
+                outcome = outcomes[0] / outcomes[1]
+                if outcome < min:
+                    min = outcome
+
+        x_range = np.arange(0, 48)
+        y_range = np.arange(100*min, 100)
+
+        plt.title("Residents' Diagnostic Progress Over Time")
+        plt.xlabel("Time Segment by" + str(time_segment) + "Days")
+        plt.ylabel("Success Rate Percentage")
+        plt.plot(x_range, y_range, "ob")
+
+        num_colors = len(physician_time_dictionary)
+        color = cm.rainbow(np.linspace(0, 1, num_colors))
+
+        for physician_name, physician_diagnostics in physician_time_dictionary:
+            for time, outcome in physician_diagnostics:
+                percent = 100 * (outcome[0] / outcome[1])
+                c = next(color)
+                plt.plot(time, percent, label = str(physician_name), c = c)
+
+        plt.show()
