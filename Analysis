@@ -13,7 +13,7 @@ To that end, the following functions are made
     
     graph_the_physicians:
         Inputs:
-            Same as time_break
+            (see time_break)
         Output:
             Graph of resident success rate vs time segment for every physician
 
@@ -75,7 +75,6 @@ def time_break(input_resident_dictionary, time_segment):
         '''
         Inputs:
             (see time_break)
-
         Outputs:
             Graph of resident success rate vs time segment for every physician
         '''
